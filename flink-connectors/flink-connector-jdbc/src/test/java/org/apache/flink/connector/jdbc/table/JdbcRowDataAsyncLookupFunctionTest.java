@@ -109,22 +109,24 @@ public class JdbcRowDataAsyncLookupFunctionTest extends JdbcLookupTestBase {
                         .setCacheMissingKey(true)
                         .setCacheExpireMs(60000)
                         .setCacheMaxSize(10)
-                        .setLookupAsyncParallelism(2)
                         .build();
         JdbcRowDataAsyncLookupFunction lookupFunction =
                 buildRowDataAsyncLookupFunction(lookupOptions);
         lookupFunction.open(null);
-        RowData keyRow = GenericRowData.of(4, StringData.fromString("9"));
         List<String> result = new ArrayList();
+        RowData keyRow = GenericRowData.of(4, StringData.fromString("9"));
 
+        CountDownLatch latch = new CountDownLatch(1);
         CompletableFuture<Collection<RowData>> future = new CompletableFuture<>();
-        lookupFunction.eval(future, 4, StringData.fromString("9"));
-        future.whenCompleteAsync(
+        lookupFunction.eval(future, keyRow.getInt(0), keyRow.getString(1));
+        future.whenComplete(
                 (rs, t) -> {
-                    rs.forEach(row -> result.add(row.toString()));
+                    synchronized (result) {
+                        rs.forEach(row -> result.add(row.toString()));
+                    }
+                    latch.countDown();
                 });
-        future.get();
-        // get cache
+        latch.await();
         Cache<RowData, List<RowData>> cache = lookupFunction.getCache();
 
         // empty data should cache
@@ -137,12 +139,17 @@ public class JdbcRowDataAsyncLookupFunctionTest extends JdbcLookupTestBase {
                         + LOOKUP_TABLE
                         + " (id1, id2, comment1, comment2) VALUES (4, '9', '49-c1', '49-c2')");
 
-        lookupFunction.eval(future, 4, StringData.fromString("9"));
-        future.whenCompleteAsync(
+        future = new CompletableFuture<>();
+        CountDownLatch latch2 = new CountDownLatch(1);
+        lookupFunction.eval(future, keyRow.getInt(0), keyRow.getString(1));
+        future.whenComplete(
                 (rs, t) -> {
-                    rs.forEach(row -> result.add(row.toString()));
+                    synchronized (result) {
+                        rs.forEach(row -> result.add(row.toString()));
+                    }
+                    latch2.countDown();
                 });
-        future.get();
+        latch2.await();
 
         assertEquals(cache.getIfPresent(keyRow), Collections.<RowData>emptyList());
     }
