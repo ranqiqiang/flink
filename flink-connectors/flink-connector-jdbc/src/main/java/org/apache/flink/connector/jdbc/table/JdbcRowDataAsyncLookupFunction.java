@@ -132,9 +132,9 @@ public class JdbcRowDataAsyncLookupFunction extends AsyncTableFunction<RowData> 
                     cacheMaxSize == -1 || cacheExpireMs == -1
                             ? null
                             : CacheBuilder.newBuilder()
-                                    .expireAfterWrite(cacheExpireMs, TimeUnit.MILLISECONDS)
-                                    .maximumSize(cacheMaxSize)
-                                    .build();
+                            .expireAfterWrite(cacheExpireMs, TimeUnit.MILLISECONDS)
+                            .maximumSize(cacheMaxSize)
+                            .build();
             // Create async lookup thread pool
             ThreadFactory threadFactory =
                     new ThreadFactoryBuilder()
@@ -161,8 +161,12 @@ public class JdbcRowDataAsyncLookupFunction extends AsyncTableFunction<RowData> 
         if (cache != null) {
             List<RowData> cachedRows = cache.getIfPresent(keyRow);
             if (cachedRows != null) {
-                for (RowData cachedRow : cachedRows) {
-                    future.complete(Collections.singletonList(cachedRow));
+                if (cachedRows.size() == 0) {
+                    future.complete(Collections.emptyList());
+                } else {
+                    for (RowData cachedRow : cachedRows) {
+                        future.complete(Collections.singletonList(cachedRow));
+                    }
                 }
                 return;
             }
@@ -231,8 +235,7 @@ public class JdbcRowDataAsyncLookupFunction extends AsyncTableFunction<RowData> 
                             throw new RuntimeException("connection pool maybe out of maxSize", ex);
                         }
                     }
-                },
-                asyncExecutors);
+                }, asyncExecutors);
     }
 
     @Override
