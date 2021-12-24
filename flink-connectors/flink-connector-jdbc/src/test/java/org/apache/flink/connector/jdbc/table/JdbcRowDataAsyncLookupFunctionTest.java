@@ -49,13 +49,13 @@ import static org.junit.Assert.assertTrue;
 /** Test suite for {@link JdbcRowDataAsyncLookupFunction}. */
 public class JdbcRowDataAsyncLookupFunctionTest extends JdbcLookupTestBase {
 
-    private static String[] fieldNames = new String[] {"id1", "id2", "comment1", "comment2"};
+    private static String[] fieldNames = new String[]{"id1", "id2", "comment1", "comment2"};
     private static DataType[] fieldDataTypes =
-            new DataType[] {
-                DataTypes.INT(), DataTypes.STRING(), DataTypes.STRING(), DataTypes.STRING()
+            new DataType[]{
+                    DataTypes.INT(), DataTypes.STRING(), DataTypes.STRING(), DataTypes.STRING()
             };
 
-    private static String[] lookupKeys = new String[] {"id1", "id2"};
+    private static String[] lookupKeys = new String[]{"id1", "id2"};
 
     @Test
     public void testEval() throws Exception {
@@ -66,9 +66,9 @@ public class JdbcRowDataAsyncLookupFunctionTest extends JdbcLookupTestBase {
         lookupFunction.open(null);
         List<String> result = new ArrayList();
         Object[][] rowKeys =
-                new Object[][] {
-                    new Object[] {1, "1"},
-                    new Object[] {2, "3"},
+                new Object[][]{
+                        new Object[]{1, "1"},
+                        new Object[]{2, "3"},
                 };
 
         CountDownLatch latch = new CountDownLatch(rowKeys.length);
@@ -109,24 +109,22 @@ public class JdbcRowDataAsyncLookupFunctionTest extends JdbcLookupTestBase {
                         .setCacheMissingKey(true)
                         .setCacheExpireMs(60000)
                         .setCacheMaxSize(10)
+                        .setLookupAsyncParallelism(2)
                         .build();
         JdbcRowDataAsyncLookupFunction lookupFunction =
                 buildRowDataAsyncLookupFunction(lookupOptions);
         lookupFunction.open(null);
-        List<String> result = new ArrayList();
         RowData keyRow = GenericRowData.of(4, StringData.fromString("9"));
+        List<String> result = new ArrayList();
 
-        CountDownLatch latch = new CountDownLatch(1);
         CompletableFuture<Collection<RowData>> future = new CompletableFuture<>();
-        lookupFunction.eval(future, keyRow.getInt(0), keyRow.getString(1));
-        future.whenComplete(
+        lookupFunction.eval(future, 4, StringData.fromString("9"));
+        future.whenCompleteAsync(
                 (rs, t) -> {
-                    synchronized (result) {
-                        rs.forEach(row -> result.add(row.toString()));
-                    }
-                    latch.countDown();
+                    rs.forEach(row -> result.add(row.toString()));
                 });
-        latch.await();
+        future.get();
+        // get cache
         Cache<RowData, List<RowData>> cache = lookupFunction.getCache();
 
         // empty data should cache
@@ -139,17 +137,12 @@ public class JdbcRowDataAsyncLookupFunctionTest extends JdbcLookupTestBase {
                         + LOOKUP_TABLE
                         + " (id1, id2, comment1, comment2) VALUES (4, '9', '49-c1', '49-c2')");
 
-        future = new CompletableFuture<>();
-        CountDownLatch latch2 = new CountDownLatch(1);
-        lookupFunction.eval(future, keyRow.getInt(0), keyRow.getString(1));
-        future.whenComplete(
+        lookupFunction.eval(future, 4, StringData.fromString("9"));
+        future.whenCompleteAsync(
                 (rs, t) -> {
-                    synchronized (result) {
-                        rs.forEach(row -> result.add(row.toString()));
-                    }
-                    latch2.countDown();
+                    rs.forEach(row -> result.add(row.toString()));
                 });
-        latch2.await();
+        future.get();
 
         assertEquals(cache.getIfPresent(keyRow), Collections.<RowData>emptyList());
     }
@@ -167,7 +160,7 @@ public class JdbcRowDataAsyncLookupFunctionTest extends JdbcLookupTestBase {
                 buildRowDataAsyncLookupFunction(lookupOptions);
         lookupFunction.open(null);
         List<String> result = new ArrayList();
-        Object[][] rowKeys = new Object[][] {new Object[] {5, "1"}};
+        Object[][] rowKeys = new Object[][]{new Object[]{5, "1"}};
         RowData keyRow = GenericRowData.of(5, StringData.fromString("1"));
 
         CountDownLatch latch = new CountDownLatch(rowKeys.length);
