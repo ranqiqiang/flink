@@ -49,13 +49,13 @@ import static org.junit.Assert.assertTrue;
 /** Test suite for {@link JdbcRowDataAsyncLookupFunction}. */
 public class JdbcRowDataAsyncLookupFunctionTest extends JdbcLookupTestBase {
 
-    private static String[] fieldNames = new String[]{"id1", "id2", "comment1", "comment2"};
+    private static String[] fieldNames = new String[] {"id1", "id2", "comment1", "comment2"};
     private static DataType[] fieldDataTypes =
-            new DataType[]{
-                    DataTypes.INT(), DataTypes.STRING(), DataTypes.STRING(), DataTypes.STRING()
+            new DataType[] {
+                DataTypes.INT(), DataTypes.STRING(), DataTypes.STRING(), DataTypes.STRING()
             };
 
-    private static String[] lookupKeys = new String[]{"id1", "id2"};
+    private static String[] lookupKeys = new String[] {"id1", "id2"};
 
     @Test
     public void testEval() throws Exception {
@@ -66,9 +66,9 @@ public class JdbcRowDataAsyncLookupFunctionTest extends JdbcLookupTestBase {
         lookupFunction.open(null);
         List<String> result = new ArrayList();
         Object[][] rowKeys =
-                new Object[][]{
-                        new Object[]{1, "1"},
-                        new Object[]{2, "3"},
+                new Object[][] {
+                    new Object[] {1, "1"},
+                    new Object[] {2, "3"},
                 };
 
         CountDownLatch latch = new CountDownLatch(rowKeys.length);
@@ -160,7 +160,7 @@ public class JdbcRowDataAsyncLookupFunctionTest extends JdbcLookupTestBase {
                 buildRowDataAsyncLookupFunction(lookupOptions);
         lookupFunction.open(null);
         List<String> result = new ArrayList();
-        Object[][] rowKeys = new Object[][]{new Object[]{5, "1"}};
+        Object[][] rowKeys = new Object[][] {new Object[] {5, "1"}};
         RowData keyRow = GenericRowData.of(5, StringData.fromString("1"));
 
         CountDownLatch latch = new CountDownLatch(rowKeys.length);
