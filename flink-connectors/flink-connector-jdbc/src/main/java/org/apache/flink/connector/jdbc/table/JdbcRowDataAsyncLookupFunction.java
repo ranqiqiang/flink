@@ -226,13 +226,19 @@ public class JdbcRowDataAsyncLookupFunction extends AsyncTableFunction<RowData> 
                         }
                         return rows;
                     } catch (SQLException | InterruptedException e) {
-                        e.printStackTrace();
+                        try {
+                            connectionEntry =
+                                    jdbcConnectionPoolManager.checkAndCreateConnection(
+                                            connectionEntry);
+                        } catch (SQLException | ClassNotFoundException | InterruptedException ex) {
+                            ex.printStackTrace();
+                        }
                         throw new RuntimeException(e.getMessage());
                     } finally {
                         try {
                             jdbcConnectionPoolManager.returnConnectionEntry(connectionEntry);
-                        } catch (InterruptedException ex) {
-                            throw new RuntimeException("connection pool maybe out of maxSize", ex);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e.getMessage());
                         }
                     }
                 },

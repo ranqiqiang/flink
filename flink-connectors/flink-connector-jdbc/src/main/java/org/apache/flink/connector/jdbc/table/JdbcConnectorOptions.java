@@ -153,7 +153,8 @@ public class JdbcConnectorOptions {
             ConfigOptions.key("lookup.async.parallelism")
                     .intType()
                     .defaultValue(4)
-                    .withDescription("The max jdbc connections.");
+                    .withDescription("The max jdbc connections."
+                            + "it's should less than the 'table.exec.async-lookup.buffer-capacity'");
 
     // write config options
     public static final ConfigOption<Integer> SINK_BUFFER_FLUSH_MAX_ROWS =
@@ -177,5 +178,6 @@ public class JdbcConnectorOptions {
                     .defaultValue(3)
                     .withDescription("The max retry times if writing records to database failed.");
 
-    private JdbcConnectorOptions() {}
+    private JdbcConnectorOptions() {
+    }
 }

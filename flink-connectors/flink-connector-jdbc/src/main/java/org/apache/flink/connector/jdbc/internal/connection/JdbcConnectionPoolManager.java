@@ -57,8 +57,7 @@ public class JdbcConnectionPoolManager implements Serializable {
         this.query = query;
     }
 
-    public JdbcConnectionEntry createConnectionEntry()
-            throws SQLException, ClassNotFoundException, InterruptedException {
+    public JdbcConnectionEntry createConnectionEntry() throws SQLException, ClassNotFoundException {
         JdbcConnectionProvider connectionProvider = new SimpleJdbcConnectionProvider(jdbcOptions);
         Connection dbConn = connectionProvider.getOrEstablishConnection();
         FieldNamedPreparedStatement statement =
